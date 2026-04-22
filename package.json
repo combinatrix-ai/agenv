@@ -1,0 +1,67 @@
+{
+  "name": "@combinatrix/agenv",
+  "version": "1.0.0",
+  "description": "Profile-first environment manager for AI coding agents. agenv provides reproducible agent runtime and config isolation.",
+  "main": "dist/cli.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/combinatrix-ai/agenv.git"
+  },
+  "homepage": "https://github.com/combinatrix-ai/agenv#readme",
+  "bugs": {
+    "url": "https://github.com/combinatrix-ai/agenv/issues"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "start": "npm run build && node dist/cli.js",
+    "test": "npm run build --silent && node --test test/*.test.cjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepare": "simple-git-hooks",
+    "prepack": "npm run build",
+    "format": "npx --no-install biome format --write .",
+    "format:check": "npx --no-install biome format .",
+    "lint": "npx --no-install biome lint .",
+    "lint:fix": "npx --no-install biome lint --write --unsafe .",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test"
+  },
+  "files": ["dist", "docs", "README.md", ".agenv.schema.json"],
+  "keywords": [
+    "agent",
+    "ai",
+    "cli",
+    "codex",
+    "claude",
+    "gemini",
+    "environment-manager",
+    "profile",
+    "version-manager"
+  ],
+  "author": "combinatrix-ai",
+  "license": "MIT",
+  "type": "commonjs",
+  "bin": {
+    "agenv": "dist/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "commander": "^11.1.0",
+    "ink": "^3.2.0",
+    "ink-select-input": "^4.2.2",
+    "ink-spinner": "^4.0.3",
+    "ink-text-input": "^4.0.3",
+    "react": "^17.0.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.13.10",
+    "@types/react": "^17.0.91",
+    "simple-git-hooks": "^2.11.0",
+    "typescript": "^5.8.2"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npm run format:check && npm run lint && npm run typecheck"
+  }
+}

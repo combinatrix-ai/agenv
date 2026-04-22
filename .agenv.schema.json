@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "./.agenv.schema.json",
+  "title": "agenv config",
+  "type": "object",
+  "$defs": {
+    "profileName": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]*$"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "defaultProfile": {
+      "$ref": "#/$defs/profileName"
+    },
+    "agentDefaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "codex": {
+          "$ref": "#/$defs/profileName"
+        },
+        "claude": {
+          "$ref": "#/$defs/profileName"
+        },
+        "gemini": {
+          "$ref": "#/$defs/profileName"
+        }
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/profileName"
+      },
+      "patternProperties": {
+        "^[a-z0-9][a-z0-9_-]*$": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "args": {
+              "type": "string"
+            },
+            "env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "propertyNames": {
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
