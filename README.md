@@ -4,20 +4,7 @@ Environment manager for AI coding agents — like `nvm` or `pyenv`, but for agen
 
 `agenv` installs `codex`, `claude`, and `gemini` into isolated profiles and lets you pick which profile runs by default, globally or per project. Each profile has its own agent binary and its own agent home directory, so auth, MCP servers, permissions, and history never bleed across profiles.
 
-```bash
-$ agenv
-agenv — Agent Environment Manager
-╭───────────────────────────────────────────────────────────────────────────────────────╮
-│     Name            Agent             Args            Env             Default         │
-│ 1 > claude-home     claude@2.1.119    —               —               claude          │
-│ 2   codex-work †    codex@0.125.0     —               OPENAI_API_KEY  codex, default  │
-│ 3   codex-home      codex@0.125.0     --full-auto     —                               │
-│ 4   gemini-family   gemini@0.39.1     —               —               gemini          │
-│     + Create new profile                                                              │
-╰───────────────────────────────────────────────────────────────────────────────────────╯
-† Project config at /path/to/project/.agenv.json overrides here — press d for detail
-1-9 run; n new; e edit; x remove; d detail; q quit
-```
+<img width="1080" height="460" alt="Image" src="https://github.com/user-attachments/assets/0aef078c-ca1b-4dbf-ba97-14835d7863df" />
 
 ## Install
 
@@ -28,7 +15,22 @@ npm install -g @combinatrix/agenv
 ## Common Workflows
 
 > [!TIP]
-> `agenv` (no args) opens the picker shown above, which covers daily use cases.
+> `agenv` (no args) opens the TUI shown below, which covers daily use cases.
+
+```bash
+$ agenv
+agenv — Agent Environment Manager
+╭───────────────────────────────────────────────────────────────────────────────────────╮
+│     Name            Agent             Args            Env             Default         │
+│ 1 > claude-home     claude@2.1.119    —               —               claude          │
+│ 2   codex-home      codex@0.125.0     --full-auto     —                               │
+│ 3   codex-work †    codex@0.125.0     —               OPENAI_API_KEY  codex, default  │
+│ 4   gemini-family   gemini@0.39.1     —               —               gemini          │
+│     + Create new profile                                                              │
+╰───────────────────────────────────────────────────────────────────────────────────────╯
+† Project config at /path/to/project/.agenv.json overrides here — press d for detail
+1-9 run; n new; e edit; x remove; d detail; q quit
+```
 
 ### Install and run
 
