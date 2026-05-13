@@ -21,7 +21,7 @@ Default: `~/.agenv` (or `$AGENV_HOME` when set).
 
 | Agent    | Package                     | Home env var        | `--yolo` adds                    |
 |----------|-----------------------------|---------------------|----------------------------------|
-| `codex`  | `@openai/codex`             | `CODEX_HOME`        | `--full-auto`                    |
+| `codex`  | `@openai/codex`             | `CODEX_HOME`        | `--yolo`                         |
 | `claude` | `@anthropic-ai/claude-code` | `CLAUDE_CONFIG_DIR` | `--dangerously-skip-permissions` |
 | `gemini` | `@google/gemini-cli`        | `GEMINI_CLI_HOME`   | `--yolo`                         |
 

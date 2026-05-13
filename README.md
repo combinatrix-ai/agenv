@@ -23,7 +23,7 @@ agenv — Agent Environment Manager
 ╭───────────────────────────────────────────────────────────────────────────────────────╮
 │     Name            Agent             Args            Env             Default         │
 │ 1 > claude-home     claude@2.1.119    —               —               claude          │
-│ 2   codex-home      codex@0.125.0     --full-auto     —                               │
+│ 2   codex-home      codex@0.125.0     --yolo          —                               │
 │ 3   codex-work †    codex@0.125.0     —               OPENAI_API_KEY  codex, default  │
 │ 4   gemini-family   gemini@0.39.1     —               —               gemini          │
 │     + Create new profile                                                              │
@@ -130,7 +130,7 @@ When a newer agenv release is published, `agenv` prints a one-line notice on std
 
 | Agent    | Package                     | `--yolo` adds                    |
 |----------|-----------------------------|----------------------------------|
-| `codex`  | `@openai/codex`             | `--full-auto`                    |
+| `codex`  | `@openai/codex`             | `--yolo`                         |
 | `claude` | `@anthropic-ai/claude-code` | `--dangerously-skip-permissions` |
 | `gemini` | `@google/gemini-cli`        | `--yolo`                         |
 

@@ -59,7 +59,7 @@ Options:
 
 - `--env KEY=VALUE` (repeatable): stores env defaults in global config under that profile
 - `--env-file <path>`: load env defaults from a dotenv-style file
-- `--yolo`: add agent-specific auto-approve flags (`--full-auto` for codex, `--dangerously-skip-permissions` for claude, `--yolo` for gemini)
+- `--yolo`: add agent-specific auto-approve flags (`--yolo` for codex, `--dangerously-skip-permissions` for claude, `--yolo` for gemini)
 - `--pin <version>`: pin to a specific version (skips update prompts during `run`)
 - `--force`: reinstall even if profile exists
 - `-- <saved_args...>`: saves default args in global config under that profile

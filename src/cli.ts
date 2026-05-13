@@ -71,7 +71,7 @@ program
   )
   .option('-f, --force', 'Reinstall even if profile exists')
   .option('--env-file <path>', 'Load environment variables from a .env file')
-  .option('--yolo', 'Add full-auto / skip-permissions args for the agent')
+  .option('--yolo', 'Add yolo / skip-permissions args for the agent')
   .option('--pin <version>', 'Pin to a specific version (skips update prompts)')
   .addHelpText(
     'after',
@@ -82,7 +82,7 @@ Notes:
   - Saves --env and "-- <savedArgs...>" into global .agenv.json.
   - Does not launch the agent.
   - --yolo adds agent-specific auto-approve args to saved args:
-      codex:  --full-auto
+      codex:  --yolo
       claude: --dangerously-skip-permissions
       gemini: --yolo
   - --pin locks the profile to a specific version. Newer versions are
@@ -267,7 +267,7 @@ program
     '--dry-run',
     'Preview resolved profile, args, and env without running',
   )
-  .option('--yolo', 'Add full-auto / skip-permissions args for this run only')
+  .option('--yolo', 'Add yolo / skip-permissions args for this run only')
   .option(
     '-e, --env <key=value>',
     'Per-run environment variable override (repeatable). Wins over profile env and shell env.',
@@ -290,7 +290,7 @@ Selector Resolution:
   A positional selector cannot be combined with --profile/--agent.
 
   --yolo is translated to agent-specific auto-approve args:
-    codex: --full-auto, claude: --dangerously-skip-permissions, gemini: --yolo
+    codex: --yolo, claude: --dangerously-skip-permissions, gemini: --yolo
 
 Environment precedence (low to high):
   1. shell env (\`process.env\`, including any \`FOO=bar agenv run\` prefix)

@@ -60,7 +60,7 @@ function envVarForAgent(name: string) {
 const DEFAULT_ENV: Record<string, Record<string, string>> = {};
 
 const YOLO_ARGS: Record<string, string[]> = {
-  codex: ['--full-auto'],
+  codex: ['--yolo'],
   claude: ['--dangerously-skip-permissions'],
   gemini: ['--yolo'],
 };

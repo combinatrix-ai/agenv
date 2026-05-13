@@ -348,8 +348,8 @@ test('run --yolo injects agent-specific auto-approve args', async (t) => {
 
   const output = JSON.parse(await fs.readFile(outputFile, 'utf8'));
   assert.ok(
-    output.argv.includes('--full-auto'),
-    `Expected --full-auto in argv: ${JSON.stringify(output.argv)}`,
+    output.argv.includes('--yolo'),
+    `Expected --yolo in argv: ${JSON.stringify(output.argv)}`,
   );
 });
 
