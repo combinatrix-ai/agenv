@@ -19,11 +19,13 @@ Default: `~/.agenv` (or `$AGENV_HOME` when set).
 
 ## Supported Agents
 
-| Agent    | Package                     | Home env var        | `--yolo` adds                    |
-|----------|-----------------------------|---------------------|----------------------------------|
-| `codex`  | `@openai/codex`             | `CODEX_HOME`        | `--yolo`                         |
-| `claude` | `@anthropic-ai/claude-code` | `CLAUDE_CONFIG_DIR` | `--dangerously-skip-permissions` |
-| `gemini` | `@google/gemini-cli`        | `GEMINI_CLI_HOME`   | `--yolo`                         |
+| Agent    | Package                     | Home env var        | `--yolo` adds                    | `--auto-mode` adds                                          |
+|----------|-----------------------------|---------------------|----------------------------------|-------------------------------------------------------------|
+| `codex`  | `@openai/codex`             | `CODEX_HOME`        | `--yolo`                         | `--sandbox workspace-write --ask-for-approval on-request`   |
+| `claude` | `@anthropic-ai/claude-code` | `CLAUDE_CONFIG_DIR` | `--dangerously-skip-permissions` | `--enable-auto-mode`                                        |
+| `gemini` | `@google/gemini-cli`        | `GEMINI_CLI_HOME`   | `--yolo`                         | _(not supported — use `--yolo`)_                            |
+
+`--yolo` is the full bypass: no sandbox, no approval prompts. `--auto-mode` is the safer auto-approve preset (codex and claude only); the two flags are mutually exclusive.
 
 Before launching, `agenv` points the agent's home env var at the profile's config directory (`AGENV_HOME/agents/<profile>/config/`).
 

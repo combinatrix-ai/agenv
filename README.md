@@ -128,13 +128,15 @@ When a newer agenv release is published, `agenv` prints a one-line notice on std
 
 ## Supported Agents
 
-| Agent    | Package                     | `--yolo` adds                    |
-|----------|-----------------------------|----------------------------------|
-| `codex`  | `@openai/codex`             | `--yolo`                         |
-| `claude` | `@anthropic-ai/claude-code` | `--dangerously-skip-permissions` |
-| `gemini` | `@google/gemini-cli`        | `--yolo`                         |
+| Agent    | Package                     | `--yolo` adds                    | `--auto-mode` adds                                          |
+|----------|-----------------------------|----------------------------------|-------------------------------------------------------------|
+| `codex`  | `@openai/codex`             | `--yolo`                         | `--sandbox workspace-write --ask-for-approval on-request`   |
+| `claude` | `@anthropic-ai/claude-code` | `--dangerously-skip-permissions` | `--enable-auto-mode`                                        |
+| `gemini` | `@google/gemini-cli`        | `--yolo`                         | _(not supported)_                                           |
 
 Each agent has its own flag for bypassing approval / permission prompts. Pass `--yolo` to `agenv run` (or `agenv install`) and agenv appends the right flag for that agent — so you don't have to remember which one is which.
+
+`--auto-mode` is a safer alternative for codex and claude — it auto-approves in-workspace work but keeps the sandbox / safety classifier on. `--yolo` and `--auto-mode` are mutually exclusive.
 
 ## CLI Reference
 
@@ -147,7 +149,7 @@ agenv default <local|global> <profile> [--for <agent>]
 agenv edit    <local|global> <profile> [options] [-- <saved_args...>]
 agenv list    [--json]
 agenv show    [profile] [--json] [--reveal]
-agenv run     [selector] [--profile <p> | --agent <a>] [--tui] [--yolo] [--env KEY=VALUE] [--dry-run] [--debug] [--no-update-check] [-- <agent_args...>]
+agenv run     [selector] [--profile <p> | --agent <a>] [--tui] [--yolo | --auto-mode] [--env KEY=VALUE] [--dry-run] [--debug] [--no-update-check] [-- <agent_args...>]
 ```
 
 Aliases: `i` (install), `up` (update), `rm` (remove), `ls` (list).

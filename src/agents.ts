@@ -65,10 +65,25 @@ const YOLO_ARGS: Record<string, string[]> = {
   gemini: ['--yolo'],
 };
 
+const AUTO_MODE_ARGS: Record<string, string[]> = {
+  codex: ['--sandbox', 'workspace-write', '--ask-for-approval', 'on-request'],
+  claude: ['--enable-auto-mode'],
+};
+
 function getYoloArgs(agent: string): string[] {
   const args = YOLO_ARGS[agent];
   if (!args) {
     throw createUserError(`No yolo args defined for agent "${agent}".`);
+  }
+  return args;
+}
+
+function getAutoModeArgs(agent: string): string[] {
+  const args = AUTO_MODE_ARGS[agent];
+  if (!args) {
+    throw createUserError(
+      `--auto-mode is not supported for agent "${agent}". Supported: ${Object.keys(AUTO_MODE_ARGS).join(', ')}.`,
+    );
   }
   return args;
 }
@@ -173,6 +188,7 @@ export {
   assertValidProfileName,
   envVarForAgent,
   getYoloArgs,
+  getAutoModeArgs,
   resolvePackageName,
   parseArgsString,
   shellEscapeArg,

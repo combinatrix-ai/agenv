@@ -354,6 +354,79 @@ test('run --yolo injects agent-specific auto-approve args', async (t) => {
 });
 
 // ---------------------------------------------------------------------------
+// run --auto-mode
+// ---------------------------------------------------------------------------
+
+test('run --auto-mode injects agent-specific auto-mode args (codex)', async (t) => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'agenv-test-'));
+  t.after(() => fs.rm(tmp, { recursive: true, force: true }));
+  const home = path.join(tmp, 'home');
+  const cwd = path.join(tmp, 'project');
+  const outputFile = path.join(tmp, 'output.json');
+  await fs.mkdir(cwd, { recursive: true });
+
+  await createFakeProfile(home, 'work', { agent: 'codex' });
+  await writeJson(path.join(home, '.agenv.json'), {
+    defaultProfile: 'work',
+  });
+
+  await runCli(['run', 'work', '--auto-mode'], {
+    cwd,
+    env: { AGENV_HOME: home, TEST_OUTPUT: outputFile },
+  });
+
+  const output = JSON.parse(await fs.readFile(outputFile, 'utf8'));
+  const argvStr = output.argv.join(' ');
+  assert.ok(
+    argvStr.includes('--sandbox workspace-write') &&
+      argvStr.includes('--ask-for-approval on-request'),
+    `Expected codex auto-mode args in argv: ${JSON.stringify(output.argv)}`,
+  );
+});
+
+test('run --auto-mode + --yolo is rejected as mutually exclusive', async (t) => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'agenv-test-'));
+  t.after(() => fs.rm(tmp, { recursive: true, force: true }));
+  const home = path.join(tmp, 'home');
+  const cwd = path.join(tmp, 'project');
+  await fs.mkdir(cwd, { recursive: true });
+
+  await createFakeProfile(home, 'work', { agent: 'codex' });
+  await writeJson(path.join(home, '.agenv.json'), {
+    defaultProfile: 'work',
+  });
+
+  await assert.rejects(
+    runCli(['run', 'work', '--yolo', '--auto-mode'], {
+      cwd,
+      env: { AGENV_HOME: home },
+    }),
+    /mutually exclusive/i,
+  );
+});
+
+test('run --auto-mode errors for gemini (unsupported)', async (t) => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'agenv-test-'));
+  t.after(() => fs.rm(tmp, { recursive: true, force: true }));
+  const home = path.join(tmp, 'home');
+  const cwd = path.join(tmp, 'project');
+  await fs.mkdir(cwd, { recursive: true });
+
+  await createFakeProfile(home, 'g1', { agent: 'gemini' });
+  await writeJson(path.join(home, '.agenv.json'), {
+    defaultProfile: 'g1',
+  });
+
+  await assert.rejects(
+    runCli(['run', 'g1', '--auto-mode'], {
+      cwd,
+      env: { AGENV_HOME: home },
+    }),
+    /auto-mode is not supported/i,
+  );
+});
+
+// ---------------------------------------------------------------------------
 // run --debug
 // ---------------------------------------------------------------------------
 
