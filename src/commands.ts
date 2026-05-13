@@ -27,6 +27,7 @@ import {
   envVarForAgent,
   stringifyArgs,
   getYoloArgs,
+  getAutoModeArgs,
 } from './agents';
 import { createUserError } from './errors';
 import {
@@ -240,6 +241,7 @@ async function installAction(
     envFile?: string;
     force?: boolean;
     yolo?: boolean;
+    autoMode?: boolean;
     pin?: string;
   },
 ) {
@@ -252,13 +254,22 @@ async function installAction(
   const name = normalizeAgentName(agentSpec);
   assertSupportedAgent(name);
 
-  const effectiveSavedArgs = options.yolo
-    ? [...getYoloArgs(name), ...savedArgs]
-    : savedArgs;
-  if (options.yolo) {
-    console.log(
-      `Yolo mode: adding "${getYoloArgs(name).join(' ')}" to saved args.`,
+  if (options.yolo && options.autoMode) {
+    throw createUserError(
+      '--yolo and --auto-mode are mutually exclusive. Pick one.',
+      { seeCommand: 'install' },
     );
+  }
+  const injectedArgs = options.yolo
+    ? getYoloArgs(name)
+    : options.autoMode
+      ? getAutoModeArgs(name)
+      : [];
+  const effectiveSavedArgs = [...injectedArgs, ...savedArgs];
+  if (options.yolo) {
+    console.log(`Yolo mode: adding "${injectedArgs.join(' ')}" to saved args.`);
+  } else if (options.autoMode) {
+    console.log(`Auto-mode: adding "${injectedArgs.join(' ')}" to saved args.`);
   }
 
   const profile = normalizeProfileName(profileArg) || name;
@@ -1266,6 +1277,7 @@ async function runAction(
     debug?: boolean;
     dryRun?: boolean;
     yolo?: boolean;
+    autoMode?: boolean;
     updateCheck?: boolean;
     env?: string[];
   } = {},
@@ -1417,11 +1429,23 @@ The installation may be corrupted. Try reinstalling:
       ? rawInput.forwardedArgs
       : profileArgs || [];
   const savedArgs = parseArgsString(settings.args);
-  const yoloArgs = options.yolo ? getYoloArgs(record.name) : [];
-  if (options.yolo) {
-    console.log(`Yolo mode: adding "${yoloArgs.join(' ')}" for this run.`);
+  if (options.yolo && options.autoMode) {
+    throw createUserError(
+      '--yolo and --auto-mode are mutually exclusive. Pick one.',
+      { seeCommand: 'run' },
+    );
   }
-  const combinedArgs = [...savedArgs, ...yoloArgs, ...runtimeArgs];
+  const injectedArgs = options.yolo
+    ? getYoloArgs(record.name)
+    : options.autoMode
+      ? getAutoModeArgs(record.name)
+      : [];
+  if (options.yolo) {
+    console.log(`Yolo mode: adding "${injectedArgs.join(' ')}" for this run.`);
+  } else if (options.autoMode) {
+    console.log(`Auto-mode: adding "${injectedArgs.join(' ')}" for this run.`);
+  }
+  const combinedArgs = [...savedArgs, ...injectedArgs, ...runtimeArgs];
 
   const runtimeEnv = parseEnvPairs(options.env);
   const env: Record<string, string | undefined> = {
