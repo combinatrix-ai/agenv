@@ -39,6 +39,8 @@ async function readProfileRecord(
     package: (metaObj.package as string) || DEFAULT_PACKAGES[name] || name,
     version: (metaObj.version as string) || 'latest',
     pinned: Boolean(metaObj.pinned),
+    channel: typeof metaObj.channel === 'string' ? metaObj.channel : 'npm',
+    binPath: typeof metaObj.binPath === 'string' ? metaObj.binPath : undefined,
     installedAt:
       typeof metaObj.installedAt === 'string'
         ? metaObj.installedAt

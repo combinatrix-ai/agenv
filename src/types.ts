@@ -23,6 +23,8 @@ export interface ProfileRecord {
   package: string;
   version: string;
   pinned: boolean;
+  channel: string;
+  binPath?: string;
   installedAt: string;
   profilePath: string;
   agentPath: string;

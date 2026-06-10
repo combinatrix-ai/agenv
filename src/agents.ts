@@ -62,6 +62,18 @@ const DEFAULT_ENV: Record<string, Record<string, string>> = {
   gemini: { GEMINI_FORCE_FILE_STORAGE: 'true' },
 };
 
+// Agents installable via the native (non-npm) channel.
+const NATIVE_CHANNEL_AGENTS: Set<string> = new Set(['claude', 'codex']);
+
+function assertNativeChannelSupported(name: string) {
+  if (!NATIVE_CHANNEL_AGENTS.has(name)) {
+    throw createUserError(
+      `The native channel is not supported for ${name} (no native installer exists). Use the default npm channel.`,
+      { seeCommand: 'install' },
+    );
+  }
+}
+
 const YOLO_ARGS: Record<string, string[]> = {
   codex: ['--yolo'],
   claude: ['--dangerously-skip-permissions'],
@@ -186,6 +198,8 @@ export {
   SUPPORTED_AGENTS,
   DEFAULT_PACKAGES,
   DEFAULT_ENV,
+  NATIVE_CHANNEL_AGENTS,
+  assertNativeChannelSupported,
   normalizeAgentName,
   normalizeProfileName,
   assertSupportedAgent,

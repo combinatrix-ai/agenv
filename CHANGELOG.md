@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exclusive with `--yolo`.
 - `engines` field declaring Node.js >= 22 (Node 20 reached end-of-life in
   April 2026).
+- `--channel <npm|native>` on `agenv install`: opt-in native install channel
+  for claude (SHA256-verified direct download of the standalone binary) and
+  codex (official standalone installer scoped to the profile via
+  `CODEX_HOME`/`CODEX_INSTALL_DIR`). Profile metadata records `channel` and
+  `binPath`; `run` launches native binaries directly and skips the
+  npm-registry update check; `update` and `clone` preserve the channel.
 
 ### Changed
 

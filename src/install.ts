@@ -113,7 +113,8 @@ async function ensureInstalled(
     !hasInstall ||
     !existingMeta ||
     existingMeta.package !== target.package ||
-    existingMeta.version !== target.version;
+    existingMeta.version !== target.version ||
+    (existingMeta.channel || 'npm') !== 'npm';
 
   if (needsReinstall) {
     if (hasInstall) {
@@ -137,6 +138,7 @@ async function ensureInstalled(
     package: target.package,
     version: resolvedVersion,
     pinned: Boolean(target.pinned),
+    channel: 'npm',
     installedAt:
       typeof existingMeta?.installedAt === 'string'
         ? existingMeta.installedAt

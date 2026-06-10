@@ -29,6 +29,13 @@ Default: `~/.agenv` (or `$AGENV_HOME` when set).
 
 Before launching, `agenv` points the agent's home env var at the profile's config directory (`AGENV_HOME/agents/<profile>/config/`).
 
+### Install channels
+
+Profiles install from one of two channels, recorded in the profile metadata:
+
+- `npm` (default): the agent's npm package, installed into `<profile>/agent/`.
+- `native` (`--channel native`, claude and codex only): the agent's official standalone binary at `<profile>/agent/bin/<agent>`. claude binaries are downloaded directly with SHA256 verification; codex uses the official standalone installer scoped to the profile. `agenv update` keeps the profile's channel.
+
 ### Default profile env
 
 `agenv install` seeds agent-specific env defaults into the profile config (override or remove them with `agenv edit` / `--env`):
