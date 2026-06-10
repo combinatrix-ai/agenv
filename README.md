@@ -138,6 +138,8 @@ Each agent has its own flag for bypassing approval / permission prompts. Pass `-
 
 `--auto-mode` is the safer alternative — it auto-approves routine in-workspace work but keeps the agent's sandbox / safety checks / shell-command prompts on. `--yolo` and `--auto-mode` are mutually exclusive.
 
+By default agents install from npm. For `claude` and `codex` you can opt into the official standalone binaries instead with `agenv install <agent> --channel native` — useful since both vendors now treat the native build as their primary channel. See [the CLI docs](./docs/cli.md) for details.
+
 ## CLI Reference
 
 ```bash

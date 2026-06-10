@@ -5,7 +5,7 @@ This document describes the current `agenv` CLI behavior.
 ## Command Summary
 
 ```bash
-agenv install <agent> [profile] [--env KEY=VALUE] [--env-file <path>] [--yolo | --auto-mode] [--pin <version>] [--force] [-- <saved_args...>]
+agenv install <agent> [profile] [--env KEY=VALUE] [--env-file <path>] [--yolo | --auto-mode] [--pin <version>] [--channel <npm|native>] [--force] [-- <saved_args...>]
 agenv update <profile> [--pin <version>]
 agenv remove <profile>
 agenv default <local|global> <profile> [--for <agent>]
@@ -62,6 +62,7 @@ Options:
 - `--yolo`: add agent-specific bypass flags (`--yolo` for codex, `--dangerously-skip-permissions` for claude, `--yolo` for gemini)
 - `--auto-mode`: add agent-specific safer auto-approve flags (`--sandbox workspace-write --ask-for-approval on-request` for codex, `--permission-mode auto` for claude, `--approval-mode auto_edit` for gemini). Mutually exclusive with `--yolo`.
 - `--pin <version>`: pin to a specific version (skips update prompts during `run`)
+- `--channel <npm|native>`: install channel (default `npm`). `native` downloads the agent's official standalone binary into the profile instead of installing the npm package — supported for `claude` (direct download from `downloads.claude.ai`, SHA256-verified) and `codex` (official standalone installer, run with profile-scoped `CODEX_HOME`); not available for `gemini`. Native profiles skip the npm-registry update check on `run`; `agenv update` keeps the channel.
 - `-f, --force`: reinstall even if profile exists
 - `-- <saved_args...>`: saves default args in global config under that profile
 

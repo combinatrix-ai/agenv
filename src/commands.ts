@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { getGlobalConfigFile, readJson } from './state';
+import { getGlobalConfigFile, pathExists, readJson, writeJson } from './state';
 import {
   ensureInstalled,
   findAgentBinary,
@@ -8,6 +8,7 @@ import {
   runCommand,
   writeAgentAutoUpdateConfig,
 } from './install';
+import { ensureInstalledNative } from './nativeInstall';
 import { maybeNotifySelfUpdate } from './selfUpdate';
 import {
   readInstalledVersion,
@@ -22,6 +23,7 @@ import {
   normalizeProfileName,
   assertSupportedAgent,
   assertValidProfileName,
+  assertNativeChannelSupported,
   resolvePackageName,
   parseArgsString,
   envVarForAgent,
@@ -193,6 +195,7 @@ interface JsonRecord {
   agent: string;
   version: string;
   pinned: boolean;
+  channel: string;
   package: string;
   path: string;
   agentPath: string;
@@ -218,12 +221,14 @@ async function toJsonRecord(
     account: string;
   },
 ): Promise<JsonRecord> {
-  const binPath = await findAgentBinary(record.agentPath, record.package);
+  const binPath =
+    record.binPath || (await findAgentBinary(record.agentPath, record.package));
   return {
     profile: record.profile,
     agent: record.name,
     version: record.version,
     pinned: record.pinned,
+    channel: record.channel || 'npm',
     package: record.package,
     path: record.profilePath,
     agentPath: record.agentPath,
@@ -247,6 +252,7 @@ async function installAction(
     yolo?: boolean;
     autoMode?: boolean;
     pin?: string;
+    channel?: string;
   },
 ) {
   assertSavedArgsDelimiter(['install', 'i'], savedArgs);
@@ -257,6 +263,16 @@ async function installAction(
   const profiles = await readInstalledProfiles();
   const name = normalizeAgentName(agentSpec);
   assertSupportedAgent(name);
+  const channel = options.channel || 'npm';
+  if (channel !== 'npm' && channel !== 'native') {
+    throw createUserError(
+      `Unknown install channel "${channel}". Use "npm" or "native".`,
+      { seeCommand: 'install' },
+    );
+  }
+  if (channel === 'native') {
+    assertNativeChannelSupported(name);
+  }
 
   if (options.yolo && options.autoMode) {
     throw createUserError(
@@ -281,7 +297,7 @@ async function installAction(
   const globalConfig = await loadGlobalConfig();
 
   const existing = profiles[profile];
-  if (existing && !options.force) {
+  if (existing && !options.force && (existing.channel || 'npm') === channel) {
     if (existing.name !== name) {
       throw createUserError(
         `Profile "${profile}" is already installed for agent "${existing.name}". Choose another profile name.
@@ -330,7 +346,9 @@ agenv install ${name} <profile>`,
     ...profilePaths(profile),
   };
 
-  const { meta, installed } = await ensureInstalled(target, {
+  const installer =
+    channel === 'native' ? ensureInstalledNative : ensureInstalled;
+  const { meta, installed } = await installer(target, {
     force: Boolean(options.force),
   });
   await writeAgentAutoUpdateConfig(
@@ -400,7 +418,9 @@ async function updateAction(profileArg: string, options: { pin?: string }) {
     }
     return;
   }
-  const { meta } = await ensureInstalled(target, {
+  const installer =
+    current.channel === 'native' ? ensureInstalledNative : ensureInstalled;
+  const { meta } = await installer(target, {
     force: true,
   });
   const pinnedLabel = meta.pinned ? ' (pinned)' : '';
@@ -1081,6 +1101,18 @@ async function defaultAction(
   );
 }
 
+function rewritePathPrefix(
+  targetPath: string,
+  oldPrefix: string,
+  newPrefix: string,
+) {
+  const relative = path.relative(oldPrefix, targetPath);
+  if (relative && !relative.startsWith('..') && !path.isAbsolute(relative)) {
+    return path.join(newPrefix, relative);
+  }
+  return targetPath;
+}
+
 async function cloneAction(sourceArg: string, targetArg: string) {
   const profiles = await readInstalledProfiles();
   const sourceProfile = normalizeProfileName(sourceArg);
@@ -1108,7 +1140,29 @@ async function cloneAction(sourceArg: string, targetArg: string) {
     ...profilePaths(targetProfile),
   };
 
-  await ensureInstalled(target, { force: false });
+  if (sourceRecord.channel === 'native') {
+    await fs.cp(sourceRecord.profilePath, target.profilePath, {
+      recursive: true,
+    });
+    const rewrittenBinPath = sourceRecord.binPath
+      ? rewritePathPrefix(
+          sourceRecord.binPath,
+          sourceRecord.profilePath,
+          target.profilePath,
+        )
+      : undefined;
+    await writeJson(path.join(target.profilePath, 'profile.json'), {
+      ...sourceRecord,
+      profile: target.profile,
+      agent: target.name,
+      profilePath: target.profilePath,
+      agentPath: target.agentPath,
+      configPath: target.configPath,
+      ...(rewrittenBinPath ? { binPath: rewrittenBinPath } : {}),
+    });
+  } else {
+    await ensureInstalled(target, { force: false });
+  }
   await writeAgentAutoUpdateConfig(
     sourceRecord.name,
     target.configPath || profilePaths(targetProfile).configPath,
@@ -1416,7 +1470,10 @@ In non-interactive environments, specify the profile directly:
   const record = resolveProfileRecord(profile, profiles, {
     seeCommand: 'run',
   });
-  const binPath = await findAgentBinary(record.agentPath, record.package);
+  const binPath =
+    record.binPath && (await pathExists(record.binPath))
+      ? record.binPath
+      : await findAgentBinary(record.agentPath, record.package);
   if (!binPath) {
     throw createUserError(
       `Unable to find executable for package "${record.package}".
@@ -1636,7 +1693,9 @@ The installation may be corrupted. Try reinstalling:
   }
 
   const skipUpdateCheck =
-    options.updateCheck === false || Boolean(process.env.AGENV_NO_UPDATE_CHECK);
+    record.channel === 'native' ||
+    options.updateCheck === false ||
+    Boolean(process.env.AGENV_NO_UPDATE_CHECK);
   if (!skipUpdateCheck) {
     try {
       const [installedVer, latestVer] = await Promise.all([

@@ -77,6 +77,7 @@ program
     'Add safer auto-mode args (codex, claude only; mutually exclusive with --yolo)',
   )
   .option('--pin <version>', 'Pin to a specific version (skips update prompts)')
+  .option('--channel <channel>', 'Install channel: npm (default) or native')
   .addHelpText(
     'after',
     `

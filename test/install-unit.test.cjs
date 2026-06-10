@@ -245,6 +245,28 @@ test('ensureInstalled: same package and version skips reinstall and keeps instal
   assert.equal(second.meta.installedAt, first.meta.installedAt);
 });
 
+test('ensureInstalled: legacy meta without channel field does not force reinstall', async (t) => {
+  const home = await withTempAgenvHome(t);
+  await withFakeNpm(t);
+
+  const target = {
+    profile: 'p1',
+    name: 'codex',
+    package: 'fake-agent',
+    version: '1.0.0',
+  };
+  await ensureInstalled(target);
+
+  // simulate a profile.json written by an older agenv (no channel field)
+  const metaPath = path.join(home, 'agents', 'p1', 'profile.json');
+  const meta = JSON.parse(await fs.readFile(metaPath, 'utf8'));
+  Reflect.deleteProperty(meta, 'channel');
+  await fs.writeFile(metaPath, `${JSON.stringify(meta, null, 2)}\n`);
+
+  const second = await ensureInstalled(target);
+  assert.equal(second.installed, false);
+});
+
 test('ensureInstalled: version change triggers reinstall', async (t) => {
   await withTempAgenvHome(t);
   await withFakeNpm(t);
