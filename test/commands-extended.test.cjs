@@ -405,11 +405,42 @@ test('run --auto-mode + --yolo is rejected as mutually exclusive', async (t) => 
   );
 });
 
-test('run --auto-mode errors for gemini (unsupported)', async (t) => {
+test('run --auto-mode injects --permission-mode auto (claude)', async (t) => {
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'agenv-test-'));
   t.after(() => fs.rm(tmp, { recursive: true, force: true }));
   const home = path.join(tmp, 'home');
   const cwd = path.join(tmp, 'project');
+  const outputFile = path.join(tmp, 'output.json');
+  await fs.mkdir(cwd, { recursive: true });
+
+  await createFakeProfile(home, 'c1', { agent: 'claude' });
+  await writeJson(path.join(home, '.agenv.json'), {
+    defaultProfile: 'c1',
+  });
+
+  await runCli(['run', 'c1', '--auto-mode'], {
+    cwd,
+    env: { AGENV_HOME: home, TEST_OUTPUT: outputFile },
+  });
+
+  const output = JSON.parse(await fs.readFile(outputFile, 'utf8'));
+  const argvStr = output.argv.join(' ');
+  assert.ok(
+    argvStr.includes('--permission-mode auto'),
+    `Expected claude auto-mode args in argv: ${JSON.stringify(output.argv)}`,
+  );
+  assert.ok(
+    !argvStr.includes('--enable-auto-mode'),
+    `Removed flag --enable-auto-mode must not be injected: ${JSON.stringify(output.argv)}`,
+  );
+});
+
+test('run --auto-mode injects --approval-mode auto_edit (gemini)', async (t) => {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'agenv-test-'));
+  t.after(() => fs.rm(tmp, { recursive: true, force: true }));
+  const home = path.join(tmp, 'home');
+  const cwd = path.join(tmp, 'project');
+  const outputFile = path.join(tmp, 'output.json');
   await fs.mkdir(cwd, { recursive: true });
 
   await createFakeProfile(home, 'g1', { agent: 'gemini' });
@@ -417,12 +448,16 @@ test('run --auto-mode errors for gemini (unsupported)', async (t) => {
     defaultProfile: 'g1',
   });
 
-  await assert.rejects(
-    runCli(['run', 'g1', '--auto-mode'], {
-      cwd,
-      env: { AGENV_HOME: home },
-    }),
-    /auto-mode is not supported/i,
+  await runCli(['run', 'g1', '--auto-mode'], {
+    cwd,
+    env: { AGENV_HOME: home, TEST_OUTPUT: outputFile },
+  });
+
+  const output = JSON.parse(await fs.readFile(outputFile, 'utf8'));
+  const argvStr = output.argv.join(' ');
+  assert.ok(
+    argvStr.includes('--approval-mode auto_edit'),
+    `Expected gemini auto-mode args in argv: ${JSON.stringify(output.argv)}`,
   );
 });
 

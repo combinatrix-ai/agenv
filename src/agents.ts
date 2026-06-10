@@ -57,7 +57,10 @@ function envVarForAgent(name: string) {
 }
 
 // Agent-specific default environment values applied during install.
-const DEFAULT_ENV: Record<string, Record<string, string>> = {};
+const DEFAULT_ENV: Record<string, Record<string, string>> = {
+  claude: { DISABLE_AUTOUPDATER: '1' },
+  gemini: { GEMINI_FORCE_FILE_STORAGE: 'true' },
+};
 
 const YOLO_ARGS: Record<string, string[]> = {
   codex: ['--yolo'],
@@ -67,7 +70,8 @@ const YOLO_ARGS: Record<string, string[]> = {
 
 const AUTO_MODE_ARGS: Record<string, string[]> = {
   codex: ['--sandbox', 'workspace-write', '--ask-for-approval', 'on-request'],
-  claude: ['--enable-auto-mode'],
+  claude: ['--permission-mode', 'auto'],
+  gemini: ['--approval-mode', 'auto_edit'],
 };
 
 function getYoloArgs(agent: string): string[] {

@@ -9,6 +9,9 @@ const {
   assertSupportedAgent,
   shellEscapeArg,
   stringifyArgs,
+  getYoloArgs,
+  getAutoModeArgs,
+  DEFAULT_ENV,
 } = require('../dist/agents');
 
 test('parseArgsString: empty/null input', () => {
@@ -101,4 +104,39 @@ test('stringifyArgs', () => {
   assert.equal(stringifyArgs(null), '');
   assert.equal(stringifyArgs(['--foo', 'bar']), '--foo bar');
   assert.equal(stringifyArgs(['hello world']), "'hello world'");
+});
+
+test('getYoloArgs: per-agent bypass flags', () => {
+  assert.deepEqual(getYoloArgs('codex'), ['--yolo']);
+  assert.deepEqual(getYoloArgs('claude'), ['--dangerously-skip-permissions']);
+  assert.deepEqual(getYoloArgs('gemini'), ['--yolo']);
+});
+
+test('getAutoModeArgs: codex uses sandboxed on-request approval', () => {
+  assert.deepEqual(getAutoModeArgs('codex'), [
+    '--sandbox',
+    'workspace-write',
+    '--ask-for-approval',
+    'on-request',
+  ]);
+});
+
+test('getAutoModeArgs: claude uses --permission-mode auto (replaces removed --enable-auto-mode)', () => {
+  assert.deepEqual(getAutoModeArgs('claude'), ['--permission-mode', 'auto']);
+});
+
+test('getAutoModeArgs: gemini uses --approval-mode auto_edit', () => {
+  assert.deepEqual(getAutoModeArgs('gemini'), ['--approval-mode', 'auto_edit']);
+});
+
+test('getAutoModeArgs: unknown agent throws', () => {
+  assert.throws(() => getAutoModeArgs('gpt'), /not supported/);
+});
+
+test('DEFAULT_ENV: claude disables the auto-updater', () => {
+  assert.equal(DEFAULT_ENV.claude?.DISABLE_AUTOUPDATER, '1');
+});
+
+test('DEFAULT_ENV: gemini forces file credential storage for isolation', () => {
+  assert.equal(DEFAULT_ENV.gemini?.GEMINI_FORCE_FILE_STORAGE, 'true');
 });

@@ -1,8 +1,13 @@
 const assert = require('node:assert/strict');
+const { execFile } = require('node:child_process');
 const test = require('node:test');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
+const { promisify } = require('node:util');
+
+const execFileAsync = promisify(execFile);
+const cliPath = path.resolve(__dirname, '..', 'dist', 'cli.js');
 
 const {
   ensureInstalled,
@@ -265,6 +270,74 @@ test('ensureInstalled: force triggers reinstall', async (t) => {
   await ensureInstalled(target);
   const forced = await ensureInstalled(target, { force: true });
   assert.equal(forced.installed, true);
+});
+
+// agenv install (CLI) — agent default env injection
+
+async function runCliInstall(t, args, extraEnv = {}) {
+  // fake npm is already first on PATH via withFakeNpm (process.env mutation),
+  // and the spawned CLI inherits it through env below
+  return execFileAsync('node', [cliPath, ...args], {
+    env: {
+      ...process.env,
+      AGENV_NO_UPDATE_CHECK: '1',
+      ...extraEnv,
+    },
+    maxBuffer: 1024 * 1024,
+  });
+}
+
+test('install claude: saves DISABLE_AUTOUPDATER=1 as profile env default', async (t) => {
+  const home = await withTempAgenvHome(t);
+  await withFakeNpm(t);
+
+  await runCliInstall(t, ['install', 'claude']);
+
+  const cfg = JSON.parse(
+    await fs.readFile(path.join(home, '.agenv.json'), 'utf8'),
+  );
+  assert.equal(cfg.profiles.claude.env.DISABLE_AUTOUPDATER, '1');
+});
+
+test('install gemini: saves GEMINI_FORCE_FILE_STORAGE=true as profile env default', async (t) => {
+  const home = await withTempAgenvHome(t);
+  await withFakeNpm(t);
+
+  await runCliInstall(t, ['install', 'gemini']);
+
+  const cfg = JSON.parse(
+    await fs.readFile(path.join(home, '.agenv.json'), 'utf8'),
+  );
+  assert.equal(cfg.profiles.gemini.env.GEMINI_FORCE_FILE_STORAGE, 'true');
+});
+
+test('install: user-provided --env overrides the agent default env', async (t) => {
+  const home = await withTempAgenvHome(t);
+  await withFakeNpm(t);
+
+  await runCliInstall(t, [
+    'install',
+    'gemini',
+    '--env',
+    'GEMINI_FORCE_FILE_STORAGE=false',
+  ]);
+
+  const cfg = JSON.parse(
+    await fs.readFile(path.join(home, '.agenv.json'), 'utf8'),
+  );
+  assert.equal(cfg.profiles.gemini.env.GEMINI_FORCE_FILE_STORAGE, 'false');
+});
+
+test('install codex: no default env is injected', async (t) => {
+  const home = await withTempAgenvHome(t);
+  await withFakeNpm(t);
+
+  await runCliInstall(t, ['install', 'codex']);
+
+  const cfg = JSON.parse(
+    await fs.readFile(path.join(home, '.agenv.json'), 'utf8'),
+  );
+  assert.equal(cfg.profiles?.codex?.env, undefined);
 });
 
 test('ensureInstalled: npm failure rejects with CliUserError', async (t) => {

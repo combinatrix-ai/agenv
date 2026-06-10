@@ -60,7 +60,7 @@ Options:
 - `-e, --env KEY=VALUE` (repeatable): stores env defaults in global config under that profile
 - `--env-file <path>`: load env defaults from a dotenv-style file
 - `--yolo`: add agent-specific bypass flags (`--yolo` for codex, `--dangerously-skip-permissions` for claude, `--yolo` for gemini)
-- `--auto-mode`: add agent-specific safer auto-approve flags (`--sandbox workspace-write --ask-for-approval on-request` for codex, `--enable-auto-mode` for claude; not supported for gemini). Mutually exclusive with `--yolo`.
+- `--auto-mode`: add agent-specific safer auto-approve flags (`--sandbox workspace-write --ask-for-approval on-request` for codex, `--permission-mode auto` for claude, `--approval-mode auto_edit` for gemini). Mutually exclusive with `--yolo`.
 - `--pin <version>`: pin to a specific version (skips update prompts during `run`)
 - `-f, --force`: reinstall even if profile exists
 - `-- <saved_args...>`: saves default args in global config under that profile
@@ -178,7 +178,7 @@ Options:
 - `--agent <agent>`: explicit agent resolution (`codex` | `claude` | `gemini`)
 - `--tui`: select a profile via interactive TUI
 - `--yolo`: add agent-specific bypass flags for this run (full bypass: no sandbox / permission prompts)
-- `--auto-mode`: add agent-specific safer auto-approve flags for this run (codex: `--sandbox workspace-write --ask-for-approval on-request`; claude: `--enable-auto-mode`; not supported for gemini). Mutually exclusive with `--yolo`.
+- `--auto-mode`: add agent-specific safer auto-approve flags for this run (codex: `--sandbox workspace-write --ask-for-approval on-request`; claude: `--permission-mode auto`; gemini: `--approval-mode auto_edit`). Mutually exclusive with `--yolo`.
 - `-e, --env KEY=VALUE` (repeatable): per-run env override; wins over both profile env and shell env, but not over auto-injection
 - `--debug`: print detailed selector/config resolution
 - `--dry-run`: preview resolved config without launching the agent

@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - codex `--yolo` now appends `--yolo` instead of the removed `--full-auto`
   flag.
+- claude `--auto-mode` now appends `--permission-mode auto` instead of
+  `--enable-auto-mode`, which was removed in Claude Code v2.1.111.
+- gemini now supports `--auto-mode` (appends `--approval-mode auto_edit`)
+  instead of erroring.
+- new installs seed agent env defaults: `DISABLE_AUTOUPDATER=1` for claude
+  (agenv manages versions) and `GEMINI_FORCE_FILE_STORAGE=true` for gemini
+  (keeps API keys in the profile dir instead of the shared OS keychain).
+  Existing profiles are unaffected; add the variables with `agenv edit` or
+  reinstall with `--force` to adopt them.
 - Failed external commands (e.g. `npm install`) now surface as user-facing
   CLI errors instead of raw stack traces.
 

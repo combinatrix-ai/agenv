@@ -131,12 +131,12 @@ When a newer agenv release is published, `agenv` prints a one-line notice on std
 | Agent    | Package                     | `--yolo` adds                    | `--auto-mode` adds                                          |
 |----------|-----------------------------|----------------------------------|-------------------------------------------------------------|
 | `codex`  | `@openai/codex`             | `--yolo`                         | `--sandbox workspace-write --ask-for-approval on-request`   |
-| `claude` | `@anthropic-ai/claude-code` | `--dangerously-skip-permissions` | `--enable-auto-mode`                                        |
-| `gemini` | `@google/gemini-cli`        | `--yolo`                         | _(not supported)_                                           |
+| `claude` | `@anthropic-ai/claude-code` | `--dangerously-skip-permissions` | `--permission-mode auto`                                    |
+| `gemini` | `@google/gemini-cli`        | `--yolo`                         | `--approval-mode auto_edit`                                 |
 
 Each agent has its own flag for bypassing approval / permission prompts. Pass `--yolo` to `agenv run` (or `agenv install`) and agenv appends the right flag for that agent — so you don't have to remember which one is which.
 
-`--auto-mode` is a safer alternative for codex and claude — it auto-approves in-workspace work but keeps the sandbox / safety classifier on. `--yolo` and `--auto-mode` are mutually exclusive.
+`--auto-mode` is the safer alternative — it auto-approves routine in-workspace work but keeps the agent's sandbox / safety checks / shell-command prompts on. `--yolo` and `--auto-mode` are mutually exclusive.
 
 ## CLI Reference
 
