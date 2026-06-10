@@ -656,3 +656,125 @@ test('list --json includes pinned field in profiles', async (t) => {
   assert.ok(profile);
   assert.equal(profile.pinned, true);
 });
+
+// ---------------------------------------------------------------------------
+// account resolution (show / list)
+// ---------------------------------------------------------------------------
+
+function fakeJwt(payload) {
+  const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  return `${b64({ alg: 'none' })}.${b64(payload)}.signature`;
+}
+
+async function setupShowFixture(t, { agent = 'codex' } = {}) {
+  const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'agenv-test-'));
+  t.after(() => fs.rm(tmp, { recursive: true, force: true }));
+  const home = path.join(tmp, 'home');
+  const cwd = path.join(tmp, 'project');
+  await fs.mkdir(cwd, { recursive: true });
+  await createFakeProfile(home, 'p1', { agent });
+  const configPath = path.join(home, 'agents', 'p1', 'config');
+  return { home, cwd, configPath };
+}
+
+async function showAccount(home, cwd) {
+  const result = await runCli(['show', 'p1', '--json'], {
+    cwd,
+    env: { AGENV_HOME: home },
+  });
+  return JSON.parse(result.stdout).account;
+}
+
+test('show resolves codex account email from auth.json id_token', async (t) => {
+  const { home, cwd, configPath } = await setupShowFixture(t);
+  await writeJson(path.join(configPath, 'auth.json'), {
+    tokens: { id_token: fakeJwt({ email: 'user@example.com' }) },
+  });
+
+  assert.equal(await showAccount(home, cwd), 'user@example.com');
+});
+
+test('show falls back to codex account_id when id_token has no email', async (t) => {
+  const { home, cwd, configPath } = await setupShowFixture(t);
+  await writeJson(path.join(configPath, 'auth.json'), {
+    tokens: { account_id: 'acct-123' },
+  });
+
+  assert.equal(await showAccount(home, cwd), 'acct-123');
+});
+
+test('show resolves claude account from oauthAccount', async (t) => {
+  const { home, cwd, configPath } = await setupShowFixture(t, {
+    agent: 'claude',
+  });
+  await writeJson(path.join(configPath, '.claude.json'), {
+    oauthAccount: { emailAddress: 'claude@example.com' },
+  });
+
+  assert.equal(await showAccount(home, cwd), 'claude@example.com');
+});
+
+test('show resolves gemini account from google_accounts.json', async (t) => {
+  const { home, cwd, configPath } = await setupShowFixture(t, {
+    agent: 'gemini',
+  });
+  await writeJson(path.join(configPath, '.gemini', 'google_accounts.json'), {
+    active: 'gemini@example.com',
+  });
+
+  assert.equal(await showAccount(home, cwd), 'gemini@example.com');
+});
+
+test('show shows - when no auth files exist', async (t) => {
+  const { home, cwd } = await setupShowFixture(t);
+  assert.equal(await showAccount(home, cwd), '-');
+});
+
+test('show does not crash on corrupt codex auth.json', async (t) => {
+  const { home, cwd, configPath } = await setupShowFixture(t);
+  await fs.writeFile(path.join(configPath, 'auth.json'), '{not valid json');
+
+  assert.equal(await showAccount(home, cwd), '-');
+});
+
+test('show does not crash on corrupt claude config', async (t) => {
+  const { home, cwd, configPath } = await setupShowFixture(t, {
+    agent: 'claude',
+  });
+  await fs.writeFile(path.join(configPath, '.claude.json'), '{not valid json');
+
+  assert.equal(await showAccount(home, cwd), '-');
+});
+
+test('show does not crash on corrupt gemini accounts file', async (t) => {
+  const { home, cwd, configPath } = await setupShowFixture(t, {
+    agent: 'gemini',
+  });
+  await fs.mkdir(path.join(configPath, '.gemini'), { recursive: true });
+  await fs.writeFile(
+    path.join(configPath, '.gemini', 'google_accounts.json'),
+    '{not valid json',
+  );
+
+  assert.equal(await showAccount(home, cwd), '-');
+});
+
+test('show tolerates unexpected auth.json shapes', async (t) => {
+  const { home, cwd, configPath } = await setupShowFixture(t);
+  await writeJson(path.join(configPath, 'auth.json'), { tokens: 'weird' });
+
+  assert.equal(await showAccount(home, cwd), '-');
+});
+
+test('list does not crash when a profile has corrupt auth.json', async (t) => {
+  const { home, cwd, configPath } = await setupShowFixture(t);
+  await fs.writeFile(path.join(configPath, 'auth.json'), '{not valid json');
+
+  const result = await runCli(['ls', '--json'], {
+    cwd,
+    env: { AGENV_HOME: home },
+  });
+  const parsed = JSON.parse(result.stdout);
+  const profile = parsed.profiles.find((p) => p.profile === 'p1');
+  assert.ok(profile);
+});

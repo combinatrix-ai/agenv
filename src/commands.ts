@@ -102,6 +102,21 @@ async function parseEnvFile(filePath: string): Promise<string[]> {
   return pairs;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+async function readJsonSafe(
+  file: string,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const value = await readJson(file, null);
+    return isRecord(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 function decodeJwtPayload(token: unknown): Record<string, unknown> | null {
   if (!token || typeof token !== 'string') return null;
   const parts = token.split('.');
@@ -110,7 +125,8 @@ function decodeJwtPayload(token: unknown): Record<string, unknown> | null {
     const normalized = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
     const decoded = Buffer.from(padded, 'base64').toString('utf8');
-    return JSON.parse(decoded);
+    const payload = JSON.parse(decoded);
+    return isRecord(payload) ? payload : null;
   } catch {
     return null;
   }
@@ -119,12 +135,9 @@ function decodeJwtPayload(token: unknown): Record<string, unknown> | null {
 async function resolveAccount(record: ProfileRecord): Promise<string> {
   if (record.name === 'codex') {
     const authPath = path.join(record.configPath, 'auth.json');
-    const auth = (await readJson(authPath, null)) as Record<
-      string,
-      unknown
-    > | null;
-    if (!auth || typeof auth !== 'object') return '-';
-    const tokens = auth.tokens as Record<string, unknown> | undefined;
+    const auth = await readJsonSafe(authPath);
+    if (!auth) return '-';
+    const tokens = isRecord(auth.tokens) ? auth.tokens : null;
     const email = decodeJwtPayload(tokens?.id_token)?.email;
     if (email && typeof email === 'string') {
       return email;
@@ -136,13 +149,10 @@ async function resolveAccount(record: ProfileRecord): Promise<string> {
   }
   if (record.name === 'claude') {
     const claudePath = path.join(record.configPath, '.claude.json');
-    const claudeConfig = (await readJson(claudePath, null)) as Record<
-      string,
-      unknown
-    > | null;
-    const oauthAccount = claudeConfig?.oauthAccount as
-      | Record<string, unknown>
-      | undefined;
+    const claudeConfig = await readJsonSafe(claudePath);
+    const oauthAccount = isRecord(claudeConfig?.oauthAccount)
+      ? claudeConfig.oauthAccount
+      : null;
     const email = oauthAccount?.emailAddress;
     if (email && typeof email === 'string') {
       return email;
@@ -158,10 +168,7 @@ async function resolveAccount(record: ProfileRecord): Promise<string> {
       '.gemini',
       'google_accounts.json',
     );
-    const accounts = (await readJson(accountsPath, null)) as Record<
-      string,
-      unknown
-    > | null;
+    const accounts = await readJsonSafe(accountsPath);
     const activeEmail = accounts?.active;
     if (activeEmail && typeof activeEmail === 'string') {
       return activeEmail;
@@ -172,10 +179,7 @@ async function resolveAccount(record: ProfileRecord): Promise<string> {
       '.gemini',
       'oauth_creds.json',
     );
-    const oauth = (await readJson(oauthPath, null)) as Record<
-      string,
-      unknown
-    > | null;
+    const oauth = await readJsonSafe(oauthPath);
     const email = decodeJwtPayload(oauth?.id_token)?.email;
     if (email && typeof email === 'string') {
       return email;
