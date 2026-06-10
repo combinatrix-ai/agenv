@@ -205,6 +205,12 @@ async function resolveCodexInstalledVersion(
 async function installCodexNative(agentPath: string, requestedVersion: string) {
   const { scriptPath, cleanup } = await downloadCodexInstaller();
   const binPath = path.join(agentPath, 'bin', 'codex');
+  // The installer writes a PATH export block into $HOME's shell profile
+  // (unconditionally when another codex is anywhere on PATH), so it runs
+  // with a sacrificial HOME that is discarded afterwards.
+  const sandboxHome = await fs.mkdtemp(
+    path.join(os.tmpdir(), 'agenv-codex-home-'),
+  );
   try {
     await runCommand(
       'bash',
@@ -220,12 +226,19 @@ async function installCodexNative(agentPath: string, requestedVersion: string) {
           CODEX_HOME: agentPath,
           CODEX_INSTALL_DIR: path.join(agentPath, 'bin'),
           CODEX_NON_INTERACTIVE: '1',
+          HOME: sandboxHome,
+          // Keep the install dir first on PATH so the installer's
+          // conflict detection sees this profile's codex as primary.
+          PATH: `${path.join(agentPath, 'bin')}${path.delimiter}${
+            process.env.PATH || ''
+          }`,
         },
         stdio: 'inherit',
       },
     );
   } finally {
     if (cleanup) await cleanup();
+    await fs.rm(sandboxHome, { recursive: true, force: true });
   }
 
   return {

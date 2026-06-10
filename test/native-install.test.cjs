@@ -116,6 +116,8 @@ chmod +x "$CODEX_INSTALL_DIR/codex"
   echo "CODEX_HOME=$CODEX_HOME"
   echo "CODEX_INSTALL_DIR=$CODEX_INSTALL_DIR"
   echo "CODEX_NON_INTERACTIVE=$CODEX_NON_INTERACTIVE"
+  echo "PATH=$PATH"
+  echo "HOME=$HOME"
 } > "$AGENV_TEST_INSTALLER_TRACE"
 `;
 
@@ -307,6 +309,21 @@ test('install codex --channel native runs the installer with profile-scoped env'
   );
   assert.ok(trace.includes(`CODEX_INSTALL_DIR=${path.join(agentPath, 'bin')}`));
   assert.ok(/CODEX_NON_INTERACTIVE=(1|true)/.test(trace));
+  // the bin dir must lead PATH so the installer's add_to_path short-circuits
+  // instead of appending an export block to the user's shell profile
+  assert.ok(
+    trace.includes(`PATH=${path.join(agentPath, 'bin')}${path.delimiter}`),
+    `installer PATH must start with the profile bin dir; trace: ${trace}`,
+  );
+  // the installer must run with a sacrificial HOME: when another codex is on
+  // PATH it appends a PATH block to $HOME's shell profile unconditionally
+  const homeLine = trace.split('\n').find((line) => line.startsWith('HOME='));
+  assert.ok(homeLine, `trace must record HOME; trace: ${trace}`);
+  assert.notEqual(homeLine, `HOME=${os.homedir()}`);
+  assert.ok(
+    homeLine.includes('agenv-codex-home-'),
+    `installer HOME must be a throwaway dir; got: ${homeLine}`,
+  );
 
   const meta = await readJsonFile(
     path.join(home, 'agents', 'codex', 'profile.json'),
