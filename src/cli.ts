@@ -71,7 +71,11 @@ program
   )
   .option('-f, --force', 'Reinstall even if profile exists')
   .option('--env-file <path>', 'Load environment variables from a .env file')
-  .option('--yolo', 'Add full-auto / skip-permissions args for the agent')
+  .option('--yolo', 'Add yolo / skip-permissions args for the agent')
+  .option(
+    '--auto-mode',
+    'Add safer auto-mode args (codex, claude only; mutually exclusive with --yolo)',
+  )
   .option('--pin <version>', 'Pin to a specific version (skips update prompts)')
   .addHelpText(
     'after',
@@ -81,10 +85,15 @@ Notes:
   - Installs agent files under $AGENV_HOME/agents/<profile>/agent.
   - Saves --env and "-- <savedArgs...>" into global .agenv.json.
   - Does not launch the agent.
-  - --yolo adds agent-specific auto-approve args to saved args:
-      codex:  --full-auto
+  - --yolo adds agent-specific bypass args to saved args:
+      codex:  --yolo
       claude: --dangerously-skip-permissions
       gemini: --yolo
+  - --auto-mode adds safer auto-approve args (no full sandbox bypass):
+      codex:  --sandbox workspace-write --ask-for-approval on-request
+      claude: --enable-auto-mode
+      gemini: (not supported — use --yolo)
+  - --yolo and --auto-mode are mutually exclusive.
   - --pin locks the profile to a specific version. Newer versions are
     shown as info during "agenv run" but never prompted for update.
 
@@ -267,7 +276,11 @@ program
     '--dry-run',
     'Preview resolved profile, args, and env without running',
   )
-  .option('--yolo', 'Add full-auto / skip-permissions args for this run only')
+  .option('--yolo', 'Add yolo / skip-permissions args for this run only')
+  .option(
+    '--auto-mode',
+    'Add safer auto-mode args for this run only (codex, claude only; mutually exclusive with --yolo)',
+  )
   .option(
     '-e, --env <key=value>',
     'Per-run environment variable override (repeatable). Wins over profile env and shell env.',
@@ -289,8 +302,15 @@ Selector Resolution:
   --profile and --agent cannot be used together.
   A positional selector cannot be combined with --profile/--agent.
 
-  --yolo is translated to agent-specific auto-approve args:
-    codex: --full-auto, claude: --dangerously-skip-permissions, gemini: --yolo
+  --yolo is translated to agent-specific bypass args:
+    codex: --yolo, claude: --dangerously-skip-permissions, gemini: --yolo
+
+  --auto-mode is translated to safer auto-approve args (no sandbox bypass):
+    codex:  --sandbox workspace-write --ask-for-approval on-request
+    claude: --enable-auto-mode
+    gemini: (not supported — use --yolo)
+
+  --yolo and --auto-mode are mutually exclusive.
 
 Environment precedence (low to high):
   1. shell env (\`process.env\`, including any \`FOO=bar agenv run\` prefix)

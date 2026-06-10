@@ -137,8 +137,8 @@ test('A2: --yolo args insert between saved and runtime args', async (t) => {
   });
 
   const result = await readResult(outputFile);
-  // codex yolo args = ['--full-auto']
-  assert.deepEqual(result.argv, ['--saved', '--full-auto', '--cli']);
+  // codex yolo args = ['--yolo']
+  assert.deepEqual(result.argv, ['--saved', '--yolo', '--cli']);
 });
 
 test('A3: project args replace global args entirely', async (t) => {
@@ -361,11 +361,7 @@ test('D2: --yolo composes with project args, profile env still wins over shell',
   });
 
   const result = await readResult(outputFile);
-  // saved (--from-project) + yolo (--full-auto) + runtime (--from-cli)
-  assert.deepEqual(result.argv, [
-    '--from-project',
-    '--full-auto',
-    '--from-cli',
-  ]);
+  // saved (--from-project) + yolo (--yolo) + runtime (--from-cli)
+  assert.deepEqual(result.argv, ['--from-project', '--yolo', '--from-cli']);
   assert.equal(result.env.FOO, 'profile');
 });

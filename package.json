@@ -38,6 +38,9 @@
   ],
   "author": "combinatrix-ai",
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "type": "commonjs",
   "bin": {
     "agenv": "dist/cli.js"

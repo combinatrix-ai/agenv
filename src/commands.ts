@@ -27,6 +27,7 @@ import {
   envVarForAgent,
   stringifyArgs,
   getYoloArgs,
+  getAutoModeArgs,
 } from './agents';
 import { createUserError } from './errors';
 import {
@@ -101,6 +102,21 @@ async function parseEnvFile(filePath: string): Promise<string[]> {
   return pairs;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+async function readJsonSafe(
+  file: string,
+): Promise<Record<string, unknown> | null> {
+  try {
+    const value = await readJson(file, null);
+    return isRecord(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
 function decodeJwtPayload(token: unknown): Record<string, unknown> | null {
   if (!token || typeof token !== 'string') return null;
   const parts = token.split('.');
@@ -109,7 +125,8 @@ function decodeJwtPayload(token: unknown): Record<string, unknown> | null {
     const normalized = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
     const decoded = Buffer.from(padded, 'base64').toString('utf8');
-    return JSON.parse(decoded);
+    const payload = JSON.parse(decoded);
+    return isRecord(payload) ? payload : null;
   } catch {
     return null;
   }
@@ -118,12 +135,9 @@ function decodeJwtPayload(token: unknown): Record<string, unknown> | null {
 async function resolveAccount(record: ProfileRecord): Promise<string> {
   if (record.name === 'codex') {
     const authPath = path.join(record.configPath, 'auth.json');
-    const auth = (await readJson(authPath, null)) as Record<
-      string,
-      unknown
-    > | null;
-    if (!auth || typeof auth !== 'object') return '-';
-    const tokens = auth.tokens as Record<string, unknown> | undefined;
+    const auth = await readJsonSafe(authPath);
+    if (!auth) return '-';
+    const tokens = isRecord(auth.tokens) ? auth.tokens : null;
     const email = decodeJwtPayload(tokens?.id_token)?.email;
     if (email && typeof email === 'string') {
       return email;
@@ -135,13 +149,10 @@ async function resolveAccount(record: ProfileRecord): Promise<string> {
   }
   if (record.name === 'claude') {
     const claudePath = path.join(record.configPath, '.claude.json');
-    const claudeConfig = (await readJson(claudePath, null)) as Record<
-      string,
-      unknown
-    > | null;
-    const oauthAccount = claudeConfig?.oauthAccount as
-      | Record<string, unknown>
-      | undefined;
+    const claudeConfig = await readJsonSafe(claudePath);
+    const oauthAccount = isRecord(claudeConfig?.oauthAccount)
+      ? claudeConfig.oauthAccount
+      : null;
     const email = oauthAccount?.emailAddress;
     if (email && typeof email === 'string') {
       return email;
@@ -157,10 +168,7 @@ async function resolveAccount(record: ProfileRecord): Promise<string> {
       '.gemini',
       'google_accounts.json',
     );
-    const accounts = (await readJson(accountsPath, null)) as Record<
-      string,
-      unknown
-    > | null;
+    const accounts = await readJsonSafe(accountsPath);
     const activeEmail = accounts?.active;
     if (activeEmail && typeof activeEmail === 'string') {
       return activeEmail;
@@ -171,10 +179,7 @@ async function resolveAccount(record: ProfileRecord): Promise<string> {
       '.gemini',
       'oauth_creds.json',
     );
-    const oauth = (await readJson(oauthPath, null)) as Record<
-      string,
-      unknown
-    > | null;
+    const oauth = await readJsonSafe(oauthPath);
     const email = decodeJwtPayload(oauth?.id_token)?.email;
     if (email && typeof email === 'string') {
       return email;
@@ -240,6 +245,7 @@ async function installAction(
     envFile?: string;
     force?: boolean;
     yolo?: boolean;
+    autoMode?: boolean;
     pin?: string;
   },
 ) {
@@ -252,13 +258,22 @@ async function installAction(
   const name = normalizeAgentName(agentSpec);
   assertSupportedAgent(name);
 
-  const effectiveSavedArgs = options.yolo
-    ? [...getYoloArgs(name), ...savedArgs]
-    : savedArgs;
-  if (options.yolo) {
-    console.log(
-      `Yolo mode: adding "${getYoloArgs(name).join(' ')}" to saved args.`,
+  if (options.yolo && options.autoMode) {
+    throw createUserError(
+      '--yolo and --auto-mode are mutually exclusive. Pick one.',
+      { seeCommand: 'install' },
     );
+  }
+  const injectedArgs = options.yolo
+    ? getYoloArgs(name)
+    : options.autoMode
+      ? getAutoModeArgs(name)
+      : [];
+  const effectiveSavedArgs = [...injectedArgs, ...savedArgs];
+  if (options.yolo) {
+    console.log(`Yolo mode: adding "${injectedArgs.join(' ')}" to saved args.`);
+  } else if (options.autoMode) {
+    console.log(`Auto-mode: adding "${injectedArgs.join(' ')}" to saved args.`);
   }
 
   const profile = normalizeProfileName(profileArg) || name;
@@ -1266,6 +1281,7 @@ async function runAction(
     debug?: boolean;
     dryRun?: boolean;
     yolo?: boolean;
+    autoMode?: boolean;
     updateCheck?: boolean;
     env?: string[];
   } = {},
@@ -1417,11 +1433,23 @@ The installation may be corrupted. Try reinstalling:
       ? rawInput.forwardedArgs
       : profileArgs || [];
   const savedArgs = parseArgsString(settings.args);
-  const yoloArgs = options.yolo ? getYoloArgs(record.name) : [];
-  if (options.yolo) {
-    console.log(`Yolo mode: adding "${yoloArgs.join(' ')}" for this run.`);
+  if (options.yolo && options.autoMode) {
+    throw createUserError(
+      '--yolo and --auto-mode are mutually exclusive. Pick one.',
+      { seeCommand: 'run' },
+    );
   }
-  const combinedArgs = [...savedArgs, ...yoloArgs, ...runtimeArgs];
+  const injectedArgs = options.yolo
+    ? getYoloArgs(record.name)
+    : options.autoMode
+      ? getAutoModeArgs(record.name)
+      : [];
+  if (options.yolo) {
+    console.log(`Yolo mode: adding "${injectedArgs.join(' ')}" for this run.`);
+  } else if (options.autoMode) {
+    console.log(`Auto-mode: adding "${injectedArgs.join(' ')}" for this run.`);
+  }
+  const combinedArgs = [...savedArgs, ...injectedArgs, ...runtimeArgs];
 
   const runtimeEnv = parseEnvPairs(options.env);
   const env: Record<string, string | undefined> = {

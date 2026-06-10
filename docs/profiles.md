@@ -19,13 +19,29 @@ Default: `~/.agenv` (or `$AGENV_HOME` when set).
 
 ## Supported Agents
 
-| Agent    | Package                     | Home env var        | `--yolo` adds                    |
-|----------|-----------------------------|---------------------|----------------------------------|
-| `codex`  | `@openai/codex`             | `CODEX_HOME`        | `--full-auto`                    |
-| `claude` | `@anthropic-ai/claude-code` | `CLAUDE_CONFIG_DIR` | `--dangerously-skip-permissions` |
-| `gemini` | `@google/gemini-cli`        | `GEMINI_CLI_HOME`   | `--yolo`                         |
+| Agent    | Package                     | Home env var        | `--yolo` adds                    | `--auto-mode` adds                                          |
+|----------|-----------------------------|---------------------|----------------------------------|-------------------------------------------------------------|
+| `codex`  | `@openai/codex`             | `CODEX_HOME`        | `--yolo`                         | `--sandbox workspace-write --ask-for-approval on-request`   |
+| `claude` | `@anthropic-ai/claude-code` | `CLAUDE_CONFIG_DIR` | `--dangerously-skip-permissions` | `--permission-mode auto`                                    |
+| `gemini` | `@google/gemini-cli`        | `GEMINI_CLI_HOME`   | `--yolo`                         | `--approval-mode auto_edit`                                 |
+
+`--yolo` is the full bypass: no sandbox, no approval prompts. `--auto-mode` is the safer auto-approve preset; the two flags are mutually exclusive.
 
 Before launching, `agenv` points the agent's home env var at the profile's config directory (`AGENV_HOME/agents/<profile>/config/`).
+
+### Default profile env
+
+`agenv install` seeds agent-specific env defaults into the profile config (override or remove them with `agenv edit` / `--env`):
+
+- `claude`: `DISABLE_AUTOUPDATER=1` — agenv pins versions per profile, so the agent's own auto-updater is turned off.
+- `gemini`: `GEMINI_FORCE_FILE_STORAGE=true` — keeps API-key credentials in the profile directory instead of the shared OS keychain, so profiles stay isolated.
+
+### Isolation limitations
+
+Per-profile isolation relies on each agent honoring its home env var. Known gaps, outside agenv's control:
+
+- **claude on macOS** stores OAuth tokens in the macOS Keychain, which is global to your user account. Config and settings are isolated per profile, but two claude profiles logged into different accounts may still share Keychain credentials.
+- **codex** layers config: a repo-level `.codex/config.toml` (trusted projects) or system `/etc/codex/config.toml` can override settings agenv writes into the profile. If `cli_auth_credentials_store` is set to `keyring`, credentials move to the OS keychain and `agenv show` displays `-` for the account.
 
 ## Config Files
 

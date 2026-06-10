@@ -30,7 +30,7 @@ const AGENT_ITEMS: Array<{
 const YOLO_ITEMS = [
   { label: 'No — default (recommended)', value: 'no' },
   {
-    label: 'Yes — add auto-approve args (--yolo / --full-auto / skip perms)',
+    label: 'Yes — add auto-approve args (--yolo / skip perms)',
     value: 'yes',
   },
 ];

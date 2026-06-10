@@ -57,18 +57,37 @@ function envVarForAgent(name: string) {
 }
 
 // Agent-specific default environment values applied during install.
-const DEFAULT_ENV: Record<string, Record<string, string>> = {};
+const DEFAULT_ENV: Record<string, Record<string, string>> = {
+  claude: { DISABLE_AUTOUPDATER: '1' },
+  gemini: { GEMINI_FORCE_FILE_STORAGE: 'true' },
+};
 
 const YOLO_ARGS: Record<string, string[]> = {
-  codex: ['--full-auto'],
+  codex: ['--yolo'],
   claude: ['--dangerously-skip-permissions'],
   gemini: ['--yolo'],
+};
+
+const AUTO_MODE_ARGS: Record<string, string[]> = {
+  codex: ['--sandbox', 'workspace-write', '--ask-for-approval', 'on-request'],
+  claude: ['--permission-mode', 'auto'],
+  gemini: ['--approval-mode', 'auto_edit'],
 };
 
 function getYoloArgs(agent: string): string[] {
   const args = YOLO_ARGS[agent];
   if (!args) {
     throw createUserError(`No yolo args defined for agent "${agent}".`);
+  }
+  return args;
+}
+
+function getAutoModeArgs(agent: string): string[] {
+  const args = AUTO_MODE_ARGS[agent];
+  if (!args) {
+    throw createUserError(
+      `--auto-mode is not supported for agent "${agent}". Supported: ${Object.keys(AUTO_MODE_ARGS).join(', ')}.`,
+    );
   }
   return args;
 }
@@ -173,6 +192,7 @@ export {
   assertValidProfileName,
   envVarForAgent,
   getYoloArgs,
+  getAutoModeArgs,
   resolvePackageName,
   parseArgsString,
   shellEscapeArg,

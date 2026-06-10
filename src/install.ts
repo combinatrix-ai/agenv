@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import type { SpawnOptions } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { createUserError, errorSummary, isENOENT } from './errors';
 import { getAgentsDir, pathExists, readJson, writeJson } from './state';
 
 type InstallTarget = {
@@ -63,7 +64,9 @@ function runCommand(
         resolve();
       } else {
         reject(
-          new Error(`${command} ${args.join(' ')} exited with code ${code}`),
+          createUserError(
+            `${command} ${args.join(' ')} exited with code ${code}`,
+          ),
         );
       }
     });
@@ -167,9 +170,10 @@ async function findAgentBinary(agentPath: string, packageName: string) {
       }
     }
   } catch (err: unknown) {
-    const error = err as NodeJS.ErrnoException;
-    if (error.code !== 'ENOENT') {
-      console.warn(`Warning: unable to read ${pkgJsonPath}: ${error.message}`);
+    if (!isENOENT(err)) {
+      console.warn(
+        `Warning: unable to read ${pkgJsonPath}: ${errorSummary(err)}`,
+      );
     }
   }
 
@@ -203,7 +207,7 @@ async function writeAgentAutoUpdateConfig(
     try {
       existing = await fs.readFile(tomlPath, 'utf8');
     } catch (err: unknown) {
-      if (!((err as NodeJS.ErrnoException).code === 'ENOENT')) throw err;
+      if (!isENOENT(err)) throw err;
     }
     if (!existing.includes(marker)) {
       const content = existing
@@ -222,7 +226,7 @@ async function writeAgentAutoUpdateConfig(
       const raw = await fs.readFile(settingsPath, 'utf8');
       settings = JSON.parse(raw);
     } catch (err: unknown) {
-      if (!((err as NodeJS.ErrnoException).code === 'ENOENT')) throw err;
+      if (!isENOENT(err)) throw err;
     }
     const general =
       (settings.general as Record<string, unknown> | undefined) || {};
