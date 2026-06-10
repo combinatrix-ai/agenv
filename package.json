@@ -39,7 +39,7 @@
   "author": "combinatrix-ai",
   "license": "MIT",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "type": "commonjs",
   "bin": {

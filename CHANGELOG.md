@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   safer auto-approve flags (codex: `--sandbox workspace-write
   --ask-for-approval on-request`, claude: `--enable-auto-mode`). Mutually
   exclusive with `--yolo`.
-- `engines` field declaring Node.js >= 20.
+- `engines` field declaring Node.js >= 22 (Node 20 reached end-of-life in
+  April 2026).
 
 ### Changed
 
