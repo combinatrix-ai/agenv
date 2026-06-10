@@ -21,8 +21,9 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       # Trusted Publishing requires npm 11.5.1+ for OIDC support.
+      # Pinned to the 11.x major for reproducible publishes.
       - name: Update npm
-        run: npm install -g npm@latest
+        run: npm install -g npm@11
 
       - run: npm ci
       - run: npm run check

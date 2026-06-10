@@ -57,12 +57,12 @@ Optional positional:
 
 Options:
 
-- `--env KEY=VALUE` (repeatable): stores env defaults in global config under that profile
+- `-e, --env KEY=VALUE` (repeatable): stores env defaults in global config under that profile
 - `--env-file <path>`: load env defaults from a dotenv-style file
 - `--yolo`: add agent-specific bypass flags (`--yolo` for codex, `--dangerously-skip-permissions` for claude, `--yolo` for gemini)
 - `--auto-mode`: add agent-specific safer auto-approve flags (`--sandbox workspace-write --ask-for-approval on-request` for codex, `--enable-auto-mode` for claude; not supported for gemini). Mutually exclusive with `--yolo`.
 - `--pin <version>`: pin to a specific version (skips update prompts during `run`)
-- `--force`: reinstall even if profile exists
+- `-f, --force`: reinstall even if profile exists
 - `-- <saved_args...>`: saves default args in global config under that profile
 
 Behavior notes:
@@ -118,7 +118,7 @@ Required:
 
 Options:
 
-- `--env KEY=VALUE` (repeatable): set profile env
+- `-e, --env KEY=VALUE` (repeatable): set profile env
 - `--env-file <path>`: load env from a dotenv-style file
 - `-- <saved_args...>`: set saved default args
 
@@ -179,7 +179,7 @@ Options:
 - `--tui`: select a profile via interactive TUI
 - `--yolo`: add agent-specific bypass flags for this run (full bypass: no sandbox / permission prompts)
 - `--auto-mode`: add agent-specific safer auto-approve flags for this run (codex: `--sandbox workspace-write --ask-for-approval on-request`; claude: `--enable-auto-mode`; not supported for gemini). Mutually exclusive with `--yolo`.
-- `--env KEY=VALUE` (repeatable): per-run env override; wins over both profile env and shell env, but not over auto-injection
+- `-e, --env KEY=VALUE` (repeatable): per-run env override; wins over both profile env and shell env, but not over auto-injection
 - `--debug`: print detailed selector/config resolution
 - `--dry-run`: preview resolved config without launching the agent
 - `--no-update-check`: skip the agent package update check for this run
