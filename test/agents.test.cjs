@@ -50,6 +50,32 @@ test('parseArgsString: unterminated quote throws', () => {
   assert.throws(() => parseArgsString("'unterminated"), /unterminated/);
 });
 
+test('parseArgsString: quoted empty args are preserved', () => {
+  assert.deepEqual(parseArgsString("''"), ['']);
+  assert.deepEqual(parseArgsString('""'), ['']);
+  assert.deepEqual(parseArgsString("a '' b"), ['a', '', 'b']);
+  assert.deepEqual(parseArgsString('--message "" --flag'), [
+    '--message',
+    '',
+    '--flag',
+  ]);
+  assert.deepEqual(parseArgsString("'' ''"), ['', '']);
+  assert.deepEqual(parseArgsString("a''b"), ['ab']);
+});
+
+test('stringifyArgs/parseArgsString roundtrip preserves empty args', () => {
+  const cases = [
+    [''],
+    ['', ''],
+    ['', 'a'],
+    ['a b', "it's", 'x\\y', ''],
+    ['--message', '', '--flag'],
+  ];
+  for (const args of cases) {
+    assert.deepEqual(parseArgsString(stringifyArgs(args)), args);
+  }
+});
+
 test('normalizeAgentName', () => {
   assert.equal(normalizeAgentName('CODEX'), 'codex');
   assert.equal(normalizeAgentName('  Claude  '), 'claude');

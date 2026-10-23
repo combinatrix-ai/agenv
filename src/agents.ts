@@ -96,6 +96,7 @@ function parseArgsString(argString: string | null | undefined) {
   if (!argString || typeof argString !== 'string') return [];
   const args: string[] = [];
   let current = '';
+  let started = false;
   let quote: "'" | '"' | null = null;
 
   for (let i = 0; i < argString.length; i += 1) {
@@ -128,19 +129,22 @@ function parseArgsString(argString: string | null | undefined) {
     }
 
     if (/\s/.test(ch)) {
-      if (current) {
+      if (started) {
         args.push(current);
         current = '';
+        started = false;
       }
       continue;
     }
 
     if (ch === "'" || ch === '"') {
       quote = ch;
+      started = true;
       continue;
     }
 
     if (ch === '\\') {
+      started = true;
       const next = argString[i + 1];
       if (
         next &&
@@ -155,6 +159,7 @@ function parseArgsString(argString: string | null | undefined) {
     }
 
     current += ch;
+    started = true;
   }
 
   if (quote) {
@@ -163,7 +168,7 @@ function parseArgsString(argString: string | null | undefined) {
     );
   }
 
-  if (current) {
+  if (started) {
     args.push(current);
   }
 
